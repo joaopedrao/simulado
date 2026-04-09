@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Prova Online - Sistema Anti-Trapaça Avançado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a2a3a 0%, #0f1a24 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .exam-container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 48px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .exam-header {
+            background: #0b2b3b;
+            padding: 1.5rem 2rem;
+            color: white;
+            border-bottom: 4px solid #f39c12;
+        }
+
+        .exam-header h1 {
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .exam-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            background: #1e4a62;
+            padding: 8px 16px;
+            border-radius: 40px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .student-name-area {
+            background: #fef9e6;
+            padding: 16px 24px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .name-input {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .name-input input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 60px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .start-btn {
+            background: #2c7a4d;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .quiz-area {
+            padding: 2rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .question-card {
+            background: #f9fafc;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #eef2f5;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-left: 12px;
+            border-left: 5px solid #f39c12;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 18px;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover {
+            background: #fef5e7;
+            border-color: #f39c12;
+        }
+
+        input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .button-area {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 0 20px 20px 20px;
+        }
+
+        .finalizar-btn {
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .sair-btn {
+            background: #c0392b;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .result-area {
+            background: #eef2f7;
+            margin: 20px;
+            border-radius: 28px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .security-warning {
+            background: #e74c3c;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .warning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            text-align: center;
+            padding: 20px;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .warning-overlay button {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 680px) {
+            .quiz-area {
+                padding: 1rem;
+            }
+            .button-area {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="exam-container" id="examContainer">
+    <div class="exam-header">
+        <h1>📝 Avaliação Técnica</h1>
+        <div class="exam-info">
+            <span>🔒 Modo Prova: Proibido sair</span>
+            <span>📱 Tela dividida será detectada</span>
+            <span>📸 Print Screen Bloqueado</span>
+        </div>
+    </div>
+
+    <div id="registrationSection">
+        <div class="student-name-area">
+            <div class="name-input">
+                <label>👤 Seu nome completo (obrigatório)</label>
+                <input type="text" id="studentNameInput" placeholder="Ex: Ana Clara Silva" autocomplete="off">
+            </div>
+            <button class="start-btn" id="startExamBtn">▶ Iniciar Prova</button>
+        </div>
+    </div>
+
+    <div id="quizSection" style="display: none;">
+        <div class="security-warning">
+            ⚠️ Modo seguro: Tela dividida, Print Screen, Copiar/Colar estão bloqueados
+        </div>
+        <div class="quiz-area" id="questionsArea"></div>
+        <div class="button-area">
+            <button class="sair-btn" id="exitExamBtn">🚪 Sair e Finalizar Prova</button>
+            <button class="finalizar-btn" id="submitExamBtn">✅ Finalizar Prova</button>
+        </div>
+    </div>
+
+    <div id="resultPanel" style="display: none;" class="result-area"></div>
+</div>
+
+<script>
+    // Questões
+    const QUESTIONS = [
+        {
+            text: "O que é um SERVIDOR no contexto do desenvolvimento Back-End?",
+            options: ["Computador do usuário", "Arquivo CSS", "Programa que aguarda requisições", "Navegador web"],
+            correct: 2
+        },
+        {
+            text: "O que define o Back-End no desenvolvimento de sistemas?",
+            options: ["Parte visual", "Camada do servidor", "Banco de dados", "HTML/CSS"],
+            correct: 1
+        },
+        {
+            text: "O que é Node.js?",
+            options: ["Framework CSS", "Sistema operacional", "Ambiente JavaScript no servidor", "Banco de dados"],
+            correct: 2
+        },
+        {
+            text: "O que é Expo Go?",
+            options: ["Editor de código", "App para visualizar React Native", "Framework CSS", "Versionamento"],
+            correct: 1
+        },
+        {
+            text: "Qual a representação do PHP, Python e Java?",
+            options: ["Cobra/Elefante/Engrenagem", "Café/Robô/Cobra", "Elefante/Cobra/Café", "Café/Cobra/Elefante"],
+            correct: 2
+        }
+    ];
+
+    let examActive = false;
+    let examFinished = false;
+    let studentName = "";
+    let userAnswers = new Array(QUESTIONS.length).fill(null);
+    let violationCount = 0;
+    let splitScreenDetected = false;
+
+    const registrationSection = document.getElementById('registrationSection');
+    const quizSection = document.getElementById('quizSection');
+    const resultPanel = document.getElementById('resultPanel');
+    const startBtn = document.getElementById('startExamBtn');
+    const studentNameInput = document.getElementById('studentNameInput');
+    const questionsArea = document.getElementById('questionsArea');
+    const submitExamBtn = document.getElementById('submitExamBtn');
+    const exitExamBtn = document.getElementById('exitExamBtn');
+
+    // ========== DETECÇÃO DE TELA DIVIDIDA ==========
+    function detectSplitScreen() {
+        if (!examActive || examFinished) return;
+        
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        // Detectar tela dividida no desktop (janela com menos de 80% da largura da tela)
+        const widthRatio = windowWidth / screenWidth;
+        const heightRatio = windowHeight / screenHeight;
+        
+        let isSplitScreen = false;
+        let reason = "";
+        
+        // Desktop: janela ocupando menos de 85% da largura OU menos de 90% da altura
+        if (widthRatio < 0.85 && widthRatio > 0.2) {
+            isSplitScreen = true;
+            reason = `Janela muito estreita (${Math.round(widthRatio*100)}% da tela)`;
+        }
+        
+        // Mobile: verificar aspect ratio diferente do esperado
+        const aspectRatio = windowWidth / windowHeight;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            // Em celular, tela dividida geralmente resulta em aspect ratio diferente
+            // Telas normais de celular: ~0.45-0.55 (retrato)
+            if (aspectRatio > 0.7 && aspectRatio < 1.2) {
+                // Pode ser tela dividida ou tablet
+                if (windowWidth < screen.width * 0.9) {
+                    isSplitScreen = true;
+                    reason = `Possível tela dividida no celular (ratio: ${aspectRatio.toFixed(2)})`;
+                }
+            }
+        }
+        
+        // Verificar se a janela não está maximizada
+        if (!isSplitScreen && window.outerWidth && window.innerWidth) {
+            if (window.outerWidth > window.innerWidth + 50) {
+                isSplitScreen = true;
+                reason = "Janela não está maximizada";
+            }
+        }
+        
+        if (isSplitScreen && !splitScreenDetected) {
+            splitScreenDetected = true;
+            violationCount++;
+            
+            // Mostrar aviso
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'warning-overlay';
+            warningDiv.innerHTML = `
+                <div style="background: #c0392b; padding: 30px; border-radius: 20px; max-width: 90%;">
+                    <h2>⚠️ TELA DIVIDIDA DETECTADA ⚠️</h2>
+                    <p style="margin: 20px 0; font-size: 1.1rem;">Não é permitido usar tela dividida durante a prova!</p>
+                    <p style="margin-bottom: 20px;">Motivo: ${reason}</p>
+                    <button onclick="this.parentElement.parentElement.remove()">Entendi, vou maximizar a tela</button>
+                </div>
+            `;
+            document.body.appendChild(warningDiv);
+            
+            // Remover após 5 segundos
+            setTimeout(() => {
+                if (warningDiv.parentElement) warningDiv.remove();
+            }, 5000);
+            
+            // Se detectado 3 vezes, finaliza prova
+            if (violationCount >= 3) {
+                forceExitAndComplete("Tela dividida detectada múltiplas vezes. Prova finalizada.");
+            }
+        } else if (!isSplitScreen) {
+            splitScreenDetected = false;
+        }
+    }
+
+    // ========== DETECÇÃO DE RESIZE (tentativa de dividir tela) ==========
+    function setupSplitScreenDetection() {
+        // Detectar a cada redimensionamento
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            if (examActive && !examFinished) {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    detectSplitScreen();
+                }, 500);
+            }
+        });
+        
+        // Detectar a cada segundo (para mudanças sutis)
+        setInterval(() => {
+            if (examActive && !examFinished) {
+                detectSplitScreen();
+            }
+        }, 2000);
+        
+        // Detectar inicial
+        detectSplitScreen();
+    }
+
+    // ========== DETECÇÃO DE PERDA DE FOCO (pode indicar outra app aberta) ==========
+    function setupFocusDetection() {
+        let blurCount = 0;
+        window.addEventListener('blur', function() {
+            if (examActive && !examFinished) {
+                blurCount++;
+                if (blurCount === 1) {
+                    setTimeout(() => { blurCount = 0; }, 1000);
+                } else if (blurCount >= 2) {
+                    // Perdeu foco duas vezes rápido - possível outra app
+                    forceExitAndComplete("Perda de foco repetida detectada. Prova finalizada.");
+                }
+            }
+        });
+    }
+
+    // ========== BLOQUEIO DE PRINT SCREEN ==========
+    function blockPrintScreen() {
+        window.addEventListener('keyup', function(e) {
+            if (examActive && !examFinished && e.key === 'PrintScreen') {
+                e.preventDefault();
+                alert('📸 Print Screen está bloqueado!');
+                violationCount++;
+                if (violationCount >= 3) forceExitAndComplete("Tentativas repetidas de Print Screen");
+                return false;
+            }
+        });
+        
+        window.addEventListener('keydown', function(e) {
+            if (examActive && !examFinished && e.key === 'PrintScreen') {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Bloquear impressão
+        const style = document.createElement('style');
+        style.innerHTML = `@media print { body { display: none !important; } }`;
+        document.head.appendChild(style);
+    }
+
+    // ========== BLOQUEIO DE COPY/PASTE ==========
+    function blockCopyPaste() {
+        document.addEventListener('copy', function(e) {
+            if (examActive && !examFinished) {
+                e.preventDefault();
+                alert('❌ Copiar está bloqueado!');
+                return false;
+            }
+        });
+        
+        document.addEventListener('paste', function(e) {
+            if (examActive && !examFinished) {
+                e.preventDefault();
+                alert('❌ Colar está bloqueado!');
+                return false;
+            }
+        });
+        
+        document.addEventListener('cut', function(e) {
+            if (examActive && !examFinished) {
+                e.preventDefault();
+                alert('❌ Recortar está bloqueado!');
+                return false;
+            }
+        });
+        
+        document.addEventListener('dragstart', function(e) {
+            if (examActive && !examFinished) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+
+    // ========== BLOQUEIO DE SAÍDA ==========
+    function blockNavigationAndExit() {
+        history.pushState(null, null, location.href);
+        window.addEventListener('popstate', function() {
+            if (examActive && !examFinished) {
+                forceExitAndComplete("Tentativa de voltar página");
+                history.pushState(null, null, location.href);
+            }
+        });
+
+        window.addEventListener('beforeunload', function(e) {
+            if (examActive && !examFinished) {
+                e.preventDefault();
+                e.returnValue = "Prova em andamento!";
+                return "Prova em andamento!";
+            }
+        });
+
+        document.addEventListener('visibilitychange', function() {
+            if (examActive && !examFinished && document.hidden) {
+                forceExitAndComplete("Troca de aba detectada");
+            }
+        });
+
+        window.addEventListener('keydown', function(e) {
+            if (examActive && !examFinished) {
+                const forbiddenKeys = ['F5', 'F12', 'PrintScreen'];
+                const forbiddenCombos = [
+                    { ctrl: true, key: 'r' }, { ctrl: true, key: 'R' },
+                    { ctrl: true, key: 'w' }, { ctrl: true, key: 'W' },
+                    { ctrl: true, key: 't' }, { ctrl: true, key: 'T' },
+                    { ctrl: true, key: 'n' }, { ctrl: true, key: 'N' },
+                    { ctrl: true, key: 'Tab' }, { ctrl: true, shift: true, key: 'Tab' }
+                ];
+                
+                if (forbiddenKeys.includes(e.key)) {
+                    e.preventDefault();
+                    forceExitAndComplete(`Tecla proibida: ${e.key}`);
+                    return false;
+                }
+                
+                for (let combo of forbiddenCombos) {
+                    if ((!combo.ctrl || e.ctrlKey) && (!combo.shift || e.shiftKey) && e.key === combo.key) {
+                        e.preventDefault();
+                        forceExitAndComplete(`Combinação de teclas proibida: Ctrl+${e.key}`);
+                        return false;
+                    }
+                }
+                
+                if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Tab')) {
+                    e.preventDefault();
+                    forceExitAndComplete("Alt + tecla de navegação");
+                    return false;
+                }
+            }
+        });
+
+        window.addEventListener('contextmenu', function(e) {
+            if (examActive && !examFinished) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+
+    // Forçar finalização
+    function forceExitAndComplete(reason) {
+        if (!examActive || examFinished) return;
+        
+        const currentAnswers = collectCurrentAnswersFromDOM();
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            if (currentAnswers[i] !== undefined) userAnswers[i] = currentAnswers[i];
+        }
+        
+        let scoreCount = 0;
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            if (userAnswers[i] !== null && userAnswers[i] === QUESTIONS[i].correct) scoreCount++;
+        }
+        
+        const total = QUESTIONS.length;
+        const finalMessage = `⚠️ PROVA FINALIZADA - VIOLAÇÃO DETECTADA ⚠️<br><br>
+            <strong>Estudante:</strong> ${escapeHtml(studentName)}<br>
+            <strong>Motivo:</strong> ${reason}<br>
+            <strong>Resultado:</strong> ${scoreCount} de ${total} (${Math.round((scoreCount/total)*100)}%)<br><br>
+            📌 Prova finalizada automaticamente.`;
+        
+        examActive = false;
+        examFinished = true;
+        
+        quizSection.style.display = 'none';
+        registrationSection.style.display = 'none';
+        resultPanel.style.display = 'block';
+        resultPanel.innerHTML = finalMessage;
+        resultPanel.style.background = "#fce4e4";
+        resultPanel.style.borderLeft = "6px solid #c0392b";
+    }
+
+    function collectCurrentAnswersFromDOM() {
+        const answers = new Array(QUESTIONS.length).fill(null);
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            const selected = document.querySelector(`input[name="q${i}"]:checked`);
+            if (selected) answers[i] = parseInt(selected.value);
+        }
+        return answers;
+    }
+
+    function voluntarySubmit() {
+        if (!examActive || examFinished) return;
+        
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            const selected = document.querySelector(`input[name="q${i}"]:checked`);
+            userAnswers[i] = selected ? parseInt(selected.value) : null;
+        }
+        
+        let correctCount = 0;
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            if (userAnswers[i] !== null && userAnswers[i] === QUESTIONS[i].correct) correctCount++;
+        }
+        
+        const total = QUESTIONS.length;
+        const resultText = `✅ PROVA FINALIZADA COM SUCESSO ✅<br><br>
+            <strong>Estudante:</strong> ${escapeHtml(studentName)}<br>
+            <strong>Acertos:</strong> ${correctCount} de ${total} (${Math.round((correctCount/total)*100)}%)<br><br>
+            📋 Respostas registradas. Obrigado!<br><br>
+            <button onclick="location.reload()" style="padding: 10px 20px; background: #f39c12; border: none; border-radius: 20px; cursor: pointer;">🔁 Nova Prova</button>`;
+        
+        examActive = false;
+        examFinished = true;
+        
+        quizSection.style.display = 'none';
+        registrationSection.style.display = 'none';
+        resultPanel.style.display = 'block';
+        resultPanel.innerHTML = resultText;
+        resultPanel.style.background = "#dff0e0";
+    }
+
+    function exitAndFinalize() {
+        if (!examActive || examFinished) return;
+        if (confirm("⚠️ ATENÇÃO: Sair agora finalizará a prova com as respostas atuais. Continuar?")) {
+            forceExitAndComplete("Usuário solicitou saída antecipada");
+        }
+    }
+
+    function renderQuestions() {
+        let html = '';
+        QUESTIONS.forEach((q, idx) => {
+            html += `
+                <div class="question-card">
+                    <div class="question-text">${idx+1}. ${escapeHtml(q.text)}</div>
+                    <div class="options">
+            `;
+            q.options.forEach((opt, optIdx) => {
+                html += `
+                    <div class="option" onclick="this.querySelector('input').click()">
+                        <input type="radio" name="q${idx}" value="${optIdx}" id="q${idx}_${optIdx}">
+                        <label for="q${idx}_${optIdx}">${String.fromCharCode(65+optIdx)}. ${escapeHtml(opt)}</label>
+                    </div>
+                `;
+            });
+            html += `</div></div>`;
+        });
+        questionsArea.innerHTML = html;
+        
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            document.querySelectorAll(`input[name="q${i}"]`).forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (examActive) userAnswers[i] = parseInt(e.target.value);
+                });
+            });
+        }
+    }
+
+    function startExam() {
+        const name = studentNameInput.value.trim();
+        if (!name) {
+            alert("Digite seu nome completo!");
+            return;
+        }
+        
+        studentName = name;
+        examActive = true;
+        examFinished = false;
+        violationCount = 0;
+        splitScreenDetected = false;
+        userAnswers = new Array(QUESTIONS.length).fill(null);
+        
+        registrationSection.style.display = 'none';
+        quizSection.style.display = 'block';
+        resultPanel.style.display = 'none';
+        
+        renderQuestions();
+        blockNavigationAndExit();
+        blockCopyPaste();
+        blockPrintScreen();
+        setupSplitScreenDetection();
+        setupFocusDetection();
+        
+        console.log(`Prova iniciada: ${studentName}`);
+    }
+
+    submitExamBtn.addEventListener('click', () => {
+        if (examActive && !examFinished && confirm("Finalizar prova? Não poderá alterar respostas.")) {
+            voluntarySubmit();
+        }
+    });
+    
+    exitExamBtn.addEventListener('click', exitAndFinalize);
+    startBtn.addEventListener('click', startExam);
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+    }
+    
+    window.addEventListener('load', () => {
+        history.pushState(null, null, location.href);
+    });
+</script>
+</body>
+</html>
