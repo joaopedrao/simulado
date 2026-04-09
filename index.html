@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Prova Online - Proteção Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a2a3a 0%, #0f1a24 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 20px;
+        }
+
+        .exam-container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 48px;
+            overflow: hidden;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        /* Watermark overlay que aparece em qualquer print */
+        .watermark {
+            position: fixed;
+            bottom: 5px;
+            left: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            text-align: center;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 99999;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Overlay que dificulta screenshot */
+        .screenshot-protector {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            pointer-events: none;
+            z-index: 99998;
+        }
+
+        .exam-header {
+            background: #0b2b3b;
+            padding: 1.5rem 2rem;
+            color: white;
+            border-bottom: 4px solid #f39c12;
+        }
+
+        .exam-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            background: #1e4a62;
+            padding: 8px 16px;
+            border-radius: 40px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .student-name-area {
+            background: #fef9e6;
+            padding: 20px 24px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .name-input {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .name-input input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 60px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+
+        .start-btn {
+            background: #2c7a4d;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .quiz-area {
+            padding: 2rem;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+
+        .question-card {
+            background: #f9fafc;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #eef2f5;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-left: 12px;
+            border-left: 5px solid #f39c12;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 18px;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            background: white;
+        }
+
+        input[type="radio"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .button-area {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 0 20px 20px 20px;
+        }
+
+        .finalizar-btn, .sair-btn {
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .finalizar-btn { background: #e67e22; }
+        .sair-btn { background: #c0392b; }
+
+        .result-area {
+            background: #eef2f7;
+            margin: 20px;
+            border-radius: 28px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .warning-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e74c3c;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            z-index: 100000;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        @keyframes slideDown {
+            from { top: -50px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+
+        @media (max-width: 680px) {
+            .quiz-area { padding: 1rem; }
+            .button-area { flex-direction: column; }
+            .question-text { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="exam-container">
+    <div class="exam-header">
+        <h1>📝 Prova Online</h1>
+        <div class="exam-info">
+            <span>🔒 Modo Seguro</span>
+            <span>📱 Print Screen Monitorado</span>
+            <span>👁️ Watermark Ativo</span>
+        </div>
+    </div>
+
+    <div id="registrationSection">
+        <div class="student-name-area">
+            <div class="name-input">
+                <label>👤 Nome completo:</label>
+                <input type="text" id="studentNameInput" placeholder="Digite seu nome">
+            </div>
+            <button class="start-btn" id="startExamBtn">▶ Iniciar</button>
+        </div>
+    </div>
+
+    <div id="quizSection" style="display: none;">
+        <div class="quiz-area" id="questionsArea"></div>
+        <div class="button-area">
+            <button class="sair-btn" id="exitExamBtn">🚪 Sair</button>
+            <button class="finalizar-btn" id="submitExamBtn">✅ Finalizar</button>
+        </div>
+    </div>
+
+    <div id="resultPanel" style="display: none;" class="result-area"></div>
+</div>
+
+<script>
+    const QUESTIONS = [
+        { text: "O que é um SERVIDOR no Back-End?", options: ["Computador usuário", "Arquivo CSS", "Programa que aguarda requisições", "Navegador"], correct: 2 },
+        { text: "O que define o Back-End?", options: ["Parte visual", "Camada do servidor", "Banco de dados", "HTML/CSS"], correct: 1 },
+        { text: "O que é Node.js?", options: ["Framework CSS", "SO", "Ambiente JS no servidor", "BD"], correct: 2 },
+        { text: "O que é Expo Go?", options: ["Editor código", "App React Native", "Framework CSS", "Versionamento"], correct: 1 },
+        { text: "Símbolos do PHP, Python e Java?", options: ["Cobra/Elefante/Engrenagem", "Café/Robô/Cobra", "Elefante/Cobra/Café", "Café/Cobra/Elefante"], correct: 2 }
+    ];
+
+    let examActive = false, examFinished = false, studentName = "";
+    let userAnswers = new Array(QUESTIONS.length).fill(null);
+    let blurCount = 0, printDetectCount = 0;
+
+    // Elementos
+    const registrationSection = document.getElementById('registrationSection');
+    const quizSection = document.getElementById('quizSection');
+    const resultPanel = document.getElementById('resultPanel');
+    const startBtn = document.getElementById('startExamBtn');
+    const studentNameInput = document.getElementById('studentNameInput');
+    const questionsArea = document.getElementById('questionsArea');
+    const submitBtn = document.getElementById('submitExamBtn');
+    const exitBtn = document.getElementById('exitExamBtn');
+
+    // ========== WATERMARK DINÂMICO (Dificulta print) ==========
+    function addWatermark() {
+        // Remove watermark antigo se existir
+        const oldWatermark = document.querySelector('.watermark');
+        if (oldWatermark) oldWatermark.remove();
+        
+        const watermark = document.createElement('div');
+        watermark.className = 'watermark';
+        watermark.innerHTML = `${studentName} | ${new Date().toLocaleString()} | PROVA ONLINE`;
+        document.body.appendChild(watermark);
+        
+        // Atualizar a cada 15 segundos
+        const interval = setInterval(() => {
+            if (!examActive || examFinished) {
+                clearInterval(interval);
+                return;
+            }
+            watermark.innerHTML = `${studentName} | ${new Date().toLocaleString()} | PROVA ONLINE`;
+        }, 15000);
+    }
+
+    // ========== DETECÇÃO DE PRINT SCREEN EM CELULAR ==========
+    function setupMobilePrintDetection() {
+        let lastTimestamp = Date.now();
+        
+        // Detecta quando o app perde foco (Android tira print)
+        window.addEventListener('blur', () => {
+            if (examActive && !examFinished) {
+                const now = Date.now();
+                const timeDiff = now - lastTimestamp;
+                lastTimestamp = now;
+                
+                // Se perdeu foco por um período muito curto, pode ser print
+                if (timeDiff < 500) {
+                    printDetectCount++;
+                    showWarningToast(`⚠️ Tentativa de print detectada! (${printDetectCount}/3)`);
+                    
+                    if (printDetectCount >= 3) {
+                        forceExitAndComplete("Múltiplas tentativas de captura de tela detectadas");
+                    }
+                } else {
+                    showWarningToast("⚠️ Não é permitido tirar print da tela!");
+                }
+            }
+        });
+        
+        // Detecta quando a página fica oculta (pode ser print em alguns dispositivos)
+        document.addEventListener('visibilitychange', () => {
+            if (examActive && !examFinished && document.hidden) {
+                printDetectCount++;
+                showWarningToast(`⚠️ Possível captura de tela! (${printDetectCount}/3)`);
+                
+                if (printDetectCount >= 3) {
+                    forceExitAndComplete("Múltiplas detecções de captura de tela");
+                }
+            }
+        });
+        
+        // Para iOS: detecta quando o usuário tenta usar o botão de power + home
+        let pageHidden = false;
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && examActive && !examFinished) {
+                pageHidden = true;
+                setTimeout(() => {
+                    if (pageHidden && document.hidden) {
+                        printDetectCount++;
+                        showWarningToast("⚠️ Captura de tela detectada!");
+                    }
+                }, 500);
+            } else {
+                pageHidden = false;
+            }
+        });
+    }
+
+    // ========== BLOQUEIO DE COPY/PASTE ==========
+    function blockCopyPaste() {
+        const blockEvents = ['copy', 'cut', 'paste', 'contextmenu', 'selectstart', 'dragstart'];
+        blockEvents.forEach(event => {
+            document.addEventListener(event, (e) => {
+                if (examActive && !examFinished) {
+                    e.preventDefault();
+                    if (event !== 'selectstart') {
+                        showWarningToast(`❌ Ação ${event} bloqueada!`);
+                    }
+                    return false;
+                }
+            });
+        });
+    }
+
+    // ========== BLOQUEIO DE SAÍDA ==========
+    function blockExit() {
+        history.pushState(null, null, location.href);
+        window.addEventListener('popstate', () => {
+            if (examActive && !examFinished) {
+                forceExitAndComplete("Tentativa de voltar página");
+                history.pushState(null, null, location.href);
+            }
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+            if (examActive && !examFinished) {
+                e.preventDefault();
+                e.returnValue = "Prova em andamento!";
+                return "Prova em andamento!";
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (examActive && !examFinished && document.hidden) {
+                forceExitAndComplete("Troca de aba detectada");
+            }
+        });
+
+        // Bloqueia teclas
+        window.addEventListener('keydown', (e) => {
+            if (examActive && !examFinished) {
+                const forbidden = ['F5', 'F12', 'PrintScreen'];
+                if (forbidden.includes(e.key)) {
+                    e.preventDefault();
+                    forceExitAndComplete(`Tecla ${e.key} pressionada`);
+                }
+                if ((e.ctrlKey && e.key === 'r') || (e.ctrlKey && e.key === 'R')) {
+                    e.preventDefault();
+                    forceExitAndComplete("Ctrl+R pressionado");
+                }
+            }
+        });
+    }
+
+    // ========== TOAST DE AVISO ==========
+    function showWarningToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'warning-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ========== FORÇAR FINALIZAÇÃO ==========
+    function forceExitAndComplete(reason) {
+        if (!examActive || examFinished) return;
+        
+        // Coletar respostas atuais
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            const selected = document.querySelector(`input[name="q${i}"]:checked`);
+            if (selected) userAnswers[i] = parseInt(selected.value);
+        }
+        
+        let score = 0;
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            if (userAnswers[i] === QUESTIONS[i].correct) score++;
+        }
+        
+        const total = QUESTIONS.length;
+        const message = `⚠️ PROVA FINALIZADA ⚠️<br><br>
+            <strong>Aluno:</strong> ${escapeHtml(studentName)}<br>
+            <strong>Motivo:</strong> ${reason}<br>
+            <strong>Nota:</strong> ${score}/${total} (${Math.round(score/total*100)}%)<br><br>
+            📌 Prova finalizada automaticamente.`;
+        
+        examActive = false;
+        examFinished = true;
+        
+        quizSection.style.display = 'none';
+        registrationSection.style.display = 'none';
+        resultPanel.style.display = 'block';
+        resultPanel.innerHTML = message;
+        resultPanel.style.background = "#fce4e4";
+    }
+
+    // ========== FINALIZAR VOLUNTARIAMENTE ==========
+    function voluntaryFinish() {
+        if (!examActive || examFinished) return;
+        
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            const selected = document.querySelector(`input[name="q${i}"]:checked`);
+            userAnswers[i] = selected ? parseInt(selected.value) : null;
+        }
+        
+        let score = 0;
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            if (userAnswers[i] === QUESTIONS[i].correct) score++;
+        }
+        
+        const total = QUESTIONS.length;
+        const message = `✅ PROVA CONCLUÍDA ✅<br><br>
+            <strong>Aluno:</strong> ${escapeHtml(studentName)}<br>
+            <strong>Nota:</strong> ${score}/${total} (${Math.round(score/total*100)}%)<br><br>
+            📋 Respostas registradas!<br><br>
+            <button onclick="location.reload()" style="padding: 10px 20px; background: #f39c12; border: none; border-radius: 20px; cursor: pointer;">🔁 Nova Prova</button>`;
+        
+        examActive = false;
+        examFinished = true;
+        
+        quizSection.style.display = 'none';
+        registrationSection.style.display = 'none';
+        resultPanel.style.display = 'block';
+        resultPanel.innerHTML = message;
+        resultPanel.style.background = "#dff0e0";
+    }
+
+    // ========== SAIR ANTECIPADO ==========
+    function exitExam() {
+        if (!examActive || examFinished) return;
+        if (confirm("⚠️ Sair agora finalizará a prova! Continuar?")) {
+            forceExitAndComplete("Usuário solicitou saída");
+        }
+    }
+
+    // ========== RENDERIZAR QUESTÕES ==========
+    function renderQuestions() {
+        let html = '';
+        QUESTIONS.forEach((q, idx) => {
+            html += `
+                <div class="question-card">
+                    <div class="question-text">${idx+1}. ${escapeHtml(q.text)}</div>
+                    <div class="options">
+            `;
+            q.options.forEach((opt, optIdx) => {
+                html += `
+                    <div class="option" onclick="this.querySelector('input').click()">
+                        <input type="radio" name="q${idx}" value="${optIdx}" id="q${idx}_${optIdx}">
+                        <label for="q${idx}_${optIdx}">${String.fromCharCode(65+optIdx)}. ${escapeHtml(opt)}</label>
+                    </div>
+                `;
+            });
+            html += `</div></div>`;
+        });
+        questionsArea.innerHTML = html;
+        
+        // Salvar respostas
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            document.querySelectorAll(`input[name="q${i}"]`).forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (examActive) userAnswers[i] = parseInt(e.target.value);
+                });
+            });
+        }
+    }
+
+    // ========== INICIAR PROVA ==========
+    function startExam() {
+        const name = studentNameInput.value.trim();
+        if (!name) {
+            alert("Digite seu nome completo!");
+            return;
+        }
+        
+        studentName = name;
+        examActive = true;
+        examFinished = false;
+        blurCount = 0;
+        printDetectCount = 0;
+        userAnswers = new Array(QUESTIONS.length).fill(null);
+        
+        registrationSection.style.display = 'none';
+        quizSection.style.display = 'block';
+        
+        renderQuestions();
+        addWatermark();
+        blockCopyPaste();
+        blockExit();
+        setupMobilePrintDetection();
+        
+        showWarningToast("🔒 Modo prova ativado - Prints serão detectados!");
+    }
+
+    // Eventos
+    startBtn.addEventListener('click', startExam);
+    submitBtn.addEventListener('click', () => {
+        if (examActive && !examFinished && confirm("Finalizar prova?")) {
+            voluntaryFinish();
+        }
+    });
+    exitBtn.addEventListener('click', exitExam);
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+    }
+</script>
+</body>
+</html>
